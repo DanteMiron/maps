@@ -1,17 +1,20 @@
-import { AfterViewInit, Component, ElementRef, ViewChild, numberAttribute } from '@angular/core';
-import { Map } from 'maplibre-gl';
+import { AfterViewInit, Component, ElementRef, OnDestroy, ViewChild, numberAttribute } from '@angular/core';
+import { LngLat, Map } from 'maplibre-gl';
 
 
 @Component({
   templateUrl: './zoom-range-page.component.html',
   styleUrl: './zoom-range-page.component.css'
 })
-export class ZoomRangePageComponent implements AfterViewInit {
+export class ZoomRangePageComponent implements AfterViewInit, OnDestroy {
 
   @ViewChild('map') divMap? : ElementRef;
 
   public zoom : number = 10;
   public map?: Map;
+  public currentLngLat: LngLat = new LngLat(-74.5, 40);
+  public lng: number = this.currentLngLat.lng
+  public lat: number = this.currentLngLat.lat
 
 
   ngAfterViewInit(): void {
@@ -21,13 +24,19 @@ export class ZoomRangePageComponent implements AfterViewInit {
     this.map = new Map({
       container: this.divMap?.nativeElement,
       style: 'https://api.maptiler.com/maps/openstreetmap/style.json?key=zZakkxJqH4SGaPCJ4A64', // stylesheet location
-      center: [-74.5, 40], // starting position [lng, lat]
+      center: this.currentLngLat,
       zoom: this.zoom // starting zoom
     });
 
     this.mapListeners();
 
   }
+
+  ngOnDestroy(): void {
+    this.map?.remove();
+    }
+
+
 
   mapListeners(){
     if (!this.map) throw "El mapa no esta inicializado"
@@ -39,7 +48,12 @@ export class ZoomRangePageComponent implements AfterViewInit {
     this.map.on('zoomend', (ev)=>{
       if (this.map!.getZoom() < 18 ) return;
       this.map!.zoomTo(18);
+    })
 
+    this.map.on('move', ()=>{
+      this.currentLngLat = this.map!.getCenter();
+      this.lng = this.currentLngLat.lng
+      this.lat = this.currentLngLat.lat
     })
 
   }
